@@ -8,4 +8,6 @@ interface IAuthRepository {
 
     suspend fun loginUser(email: String, password: String): Result<User>
 
+    suspend fun getUser(): Result<User>
+
 }

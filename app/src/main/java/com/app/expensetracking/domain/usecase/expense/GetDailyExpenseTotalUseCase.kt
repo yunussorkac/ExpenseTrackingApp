@@ -1,12 +1,17 @@
 package com.app.expensetracking.domain.usecase.expense
 
 import com.app.expensetracking.domain.repo.IExpenseRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class GetDailyExpenseTotalUseCase @Inject constructor(
     private val repo: IExpenseRepository,
 ) {
-    suspend operator fun invoke(): Double {
-        return repo.getDailyExpenseTotal()
+    operator fun invoke(): Flow<Double> = flow {
+        repo.getDailyExpenseTotal().collect {
+            emit(it)
+        }
+
     }
 }

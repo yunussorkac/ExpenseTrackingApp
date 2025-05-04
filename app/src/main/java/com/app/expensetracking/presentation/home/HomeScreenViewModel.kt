@@ -2,6 +2,7 @@ package com.app.expensetracking.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.expensetracking.domain.usecase.expense.DeleteExpenseUseCase
 import com.app.expensetracking.domain.usecase.expense.GetDailyExpenseTotalUseCase
 import com.app.expensetracking.domain.usecase.expense.GetMonthlyCategoryTotalsUseCase
 import com.app.expensetracking.domain.usecase.expense.GetMonthlyExpenseTotalUseCase
@@ -23,6 +24,7 @@ class HomeScreenViewModel @Inject constructor(
     private val getMonthlyExpenseTotalUseCase: GetMonthlyExpenseTotalUseCase,
     private val getMonthlyCategoryTotalsUseCase: GetMonthlyCategoryTotalsUseCase,
     private val getRecentExpensesUseCase: GetRecentExpensesUseCase,
+    private val deleteExpenseUseCase: DeleteExpenseUseCase
 ) : ViewModel() {
 
 
@@ -39,22 +41,45 @@ class HomeScreenViewModel @Inject constructor(
     val categoryTotals: StateFlow<Map<ExpenseCategory, Double>> = _categoryTotals.asStateFlow()
 
     private val _recentExpenses = MutableStateFlow<List<Expense>>(emptyList())
-    val recentExpenses: StateFlow<List<Expense>> = _recentExpenses
+    val recentExpenses: StateFlow<List<Expense>> = _recentExpenses.asStateFlow()
 
 
 
     fun loadInitialData() {
         viewModelScope.launch {
-            _dailyTotal.value = getDailyExpenseTotalUseCase()
-            _weeklyTotal.value = getWeeklyExpenseTotalUseCase()
-            _monthlyTotal.value = getMonthlyExpenseTotalUseCase()
-            _categoryTotals.value = getMonthlyCategoryTotalsUseCase()
-            getRecentExpensesUseCase.invoke().collect {
-                _recentExpenses.value = it
+            launch {
+                getDailyExpenseTotalUseCase().collect {
+                    _dailyTotal.value = it
+                }
             }
-
+            launch {
+                getWeeklyExpenseTotalUseCase().collect {
+                    _weeklyTotal.value = it
+                }
+            }
+            launch {
+                getMonthlyExpenseTotalUseCase().collect {
+                    _monthlyTotal.value = it
+                }
+            }
+            launch {
+                getMonthlyCategoryTotalsUseCase().collect {
+                    _categoryTotals.value = it
+                }
+            }
+            launch {
+                getRecentExpensesUseCase().collect {
+                    _recentExpenses.value = it
+                }
+            }
         }
     }
 
+    fun deleteExpense(expense: Expense, onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = deleteExpenseUseCase(expense)
+            onResult(result)
+        }
+    }
 
 }

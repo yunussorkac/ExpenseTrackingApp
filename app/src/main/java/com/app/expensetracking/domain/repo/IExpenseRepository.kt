@@ -10,10 +10,18 @@ interface IExpenseRepository {
 
     fun getExpenses(): Flow<List<Expense>>
 
-    suspend fun getDailyExpenseTotal(): Double
-    suspend fun getWeeklyExpenseTotal(): Double
-    suspend fun getMonthlyExpenseTotal(): Double
-    suspend fun getMonthlyCategoryTotals(): Map<ExpenseCategory, Double>
+
+    fun getDailyExpenseTotal(): Flow<Double>
+
+    fun getWeeklyExpenseTotal(): Flow<Double>
+
+    fun getMonthlyExpenseTotal(): Flow<Double>
+
+    fun getMonthlyCategoryTotals(): Flow<Map<ExpenseCategory, Double>>
+
     fun getLast5Expenses(): Flow<List<Expense>>
+
+    suspend fun deleteExpense(expense: Expense): Result<Unit>
+
 
 }

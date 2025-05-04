@@ -34,7 +34,11 @@ fun ListScreen(navHostController: NavHostController) {
         items(expenses) { expense ->
             ExpenseCard(
                 expense = expense
-            )
+            ){
+                viewModel.deleteExpense(expense) { result ->
+
+                }
+            }
         }
     }
 

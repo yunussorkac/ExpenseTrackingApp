@@ -50,6 +50,27 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getUser(): Result<User> {
+        return try {
+            val userId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("No user"))
+
+            val snapshot = firestore.collection("Users")
+                .document(userId)
+                .get()
+                .await()
+
+            if (snapshot.exists()) {
+                val user = snapshot.toObject(User::class.java)
+                    ?: return Result.failure(Exception("Error"))
+                Result.success(user)
+            } else {
+                Result.failure(Exception("No user data"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
 
 }

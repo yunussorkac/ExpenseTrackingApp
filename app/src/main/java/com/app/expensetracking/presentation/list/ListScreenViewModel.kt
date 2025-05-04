@@ -2,6 +2,7 @@ package com.app.expensetracking.presentation.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.expensetracking.domain.usecase.expense.DeleteExpenseUseCase
 import com.app.expensetracking.domain.usecase.expense.GetExpensesUseCase
 import com.app.expensetracking.model.Expense
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ListScreenViewModel @Inject constructor(
-    private val getExpensesFlowUseCase: GetExpensesUseCase
+    private val getExpensesFlowUseCase: GetExpensesUseCase,
+    private val deleteExpenseUseCase: DeleteExpenseUseCase
 ) : ViewModel() {
 
     private val _expenses = MutableStateFlow<List<Expense>>(emptyList())
@@ -26,6 +28,13 @@ class ListScreenViewModel @Inject constructor(
                 .collect { expenseList ->
                     _expenses.value = expenseList
                 }
+        }
+    }
+
+    fun deleteExpense(expense: Expense, onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = deleteExpenseUseCase(expense)
+            onResult(result)
         }
     }
 }

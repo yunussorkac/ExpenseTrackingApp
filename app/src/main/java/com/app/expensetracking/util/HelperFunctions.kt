@@ -1,6 +1,9 @@
 package com.app.expensetracking.util
 
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class HelperFunctions {
 
@@ -11,6 +14,7 @@ class HelperFunctions {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
+
         fun getEndOfDay(): Long = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 23)
             set(Calendar.MINUTE, 59)
@@ -34,5 +38,9 @@ class HelperFunctions {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
+
+
+
+
     }
 }

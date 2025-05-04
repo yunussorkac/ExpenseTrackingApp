@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.app.expensetracking.presentation.add.AddExpenseScreen
 import com.app.expensetracking.presentation.home.HomeScreen
 import com.app.expensetracking.presentation.list.ListScreen
+import com.app.expensetracking.presentation.settings.SettingsScreen
 import com.app.expensetracking.ui.components.bottom.BottomNavigation
 import com.app.expensetracking.ui.theme.ExpenseTrackingAppTheme
 import com.app.expensetracking.ui.components.top.TopAppBar
@@ -139,6 +140,7 @@ fun HomeNavigation(navController: NavHostController) {
             ListScreen(navController)
         }
         composable(NavigationItem.Settings.route) {
+            SettingsScreen(navController)
         }
 
         composable<Screens.Add> {

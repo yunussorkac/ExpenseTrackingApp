@@ -157,7 +157,11 @@ fun HomeScreen(navHostController: NavHostController) {
             }
         } else {
             items(recentExpenses) { expense ->
-                ExpenseCard(expense)
+                ExpenseCard(expense){
+                    viewModel.deleteExpense(expense){
+
+                    }
+                }
             }
         }
 

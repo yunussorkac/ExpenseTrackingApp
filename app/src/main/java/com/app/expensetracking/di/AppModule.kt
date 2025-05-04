@@ -4,6 +4,7 @@ import com.app.expensetracking.domain.repo.AuthRepositoryImpl
 import com.app.expensetracking.domain.repo.ExpenseRepositoryImpl
 import com.app.expensetracking.domain.repo.IAuthRepository
 import com.app.expensetracking.domain.repo.IExpenseRepository
+import com.app.expensetracking.domain.usecase.auth.GetUserUseCase
 import com.app.expensetracking.domain.usecase.expense.AddExpenseUseCase
 import com.app.expensetracking.domain.usecase.expense.GetDailyExpenseTotalUseCase
 import com.app.expensetracking.domain.usecase.expense.GetMonthlyCategoryTotalsUseCase
@@ -12,6 +13,7 @@ import com.app.expensetracking.domain.usecase.expense.GetRecentExpensesUseCase
 import com.app.expensetracking.domain.usecase.expense.GetWeeklyExpenseTotalUseCase
 import com.app.expensetracking.domain.usecase.auth.LoginUseCase
 import com.app.expensetracking.domain.usecase.auth.RegisterUseCase
+import com.app.expensetracking.domain.usecase.expense.DeleteExpenseUseCase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -87,6 +89,19 @@ object AppModule {
     @Singleton
     fun provideGetRecentExpensesUseCase(expenseRepository: IExpenseRepository): GetRecentExpensesUseCase {
         return GetRecentExpensesUseCase(expenseRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeleteExpenseUseCase(expenseRepository: IExpenseRepository): DeleteExpenseUseCase {
+        return DeleteExpenseUseCase(expenseRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetUserUseCase(authRepository: IAuthRepository): GetUserUseCase {
+        return GetUserUseCase(authRepository)
+
     }
 
 

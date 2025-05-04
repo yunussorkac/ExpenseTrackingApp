@@ -3,6 +3,7 @@ package com.app.expensetracking.domain.repo
 import android.util.Log
 import com.app.expensetracking.model.Expense
 import com.app.expensetracking.model.ExpenseCategory
+import com.app.expensetracking.util.HelperFunctions.Companion.getEndOfDay
 import com.app.expensetracking.util.HelperFunctions.Companion.getStartOfDay
 import com.app.expensetracking.util.HelperFunctions.Companion.getStartOfMonth
 import com.app.expensetracking.util.HelperFunctions.Companion.getStartOfWeek
@@ -12,6 +13,7 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import javax.inject.Inject
@@ -38,6 +40,7 @@ class ExpenseRepositoryImpl @Inject constructor(
         val listener = firestore.collection("Expenses")
             .document(auth.currentUser?.uid ?: "")
             .collection("Expenses")
+            .orderBy("date", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -51,14 +54,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun getDailyExpenseTotal(): Double {
+    override fun getDailyExpenseTotal(): Flow<Double> = flow {
         val start = getStartOfDay()
-        val end = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-            set(Calendar.MILLISECOND, 999)
-        }.timeInMillis
+        val end =  getEndOfDay()
 
         Log.d("ExpenseDebug", "Fetching daily expenses from $start to $end")
 
@@ -75,7 +73,7 @@ class ExpenseRepositoryImpl @Inject constructor(
 
             if (snapshot.isEmpty) {
                 Log.d("ExpenseDebug", "No expenses found for today.")
-                return 0.0
+                emit(0.0)
             } else {
                 var total = 0.0
                 snapshot.forEach { document ->
@@ -88,47 +86,72 @@ class ExpenseRepositoryImpl @Inject constructor(
                     }
                 }
                 Log.d("ExpenseDebug", "Daily total: $total")
-                return total
+                emit(total)
             }
         } catch (e: Exception) {
             Log.e("ExpenseDebug", "Error getting daily expenses: ${e.message}", e)
-            return 0.0
+            emit(0.0)
         }
     }
 
 
-    override suspend fun getWeeklyExpenseTotal(): Double {
+    override fun getWeeklyExpenseTotal(): Flow<Double> = flow {
         val start = getStartOfWeek()
-        return firestore.collection("Expenses")
-            .document(auth.currentUser?.uid ?: "")
-            .collection("Expenses")
-            .whereGreaterThanOrEqualTo("date", start)
-            .get().await()
-            .sumOf { it.toObject(Expense::class.java).amount }
+        try {
+            val snapshot = firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .whereGreaterThanOrEqualTo("date", start)
+                .get()
+                .await()
+
+            val total = snapshot.sumOf { it.toObject(Expense::class.java).amount }
+            emit(total)
+        } catch (e: Exception) {
+            Log.e("ExpenseDebug", "Error getting weekly expenses: ${e.message}", e)
+            emit(0.0)
+        }
     }
 
-    override suspend fun getMonthlyExpenseTotal(): Double {
+    override fun getMonthlyExpenseTotal(): Flow<Double> = flow {
         val start = getStartOfMonth()
-        return firestore.collection("Expenses")
-            .document(auth.currentUser?.uid ?: "")
-            .collection("Expenses")
-            .whereGreaterThanOrEqualTo("date", start)
-            .get().await()
-            .sumOf { it.toObject(Expense::class.java).amount }
+        try {
+            val snapshot = firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .whereGreaterThanOrEqualTo("date", start)
+                .get()
+                .await()
+
+            val total = snapshot.sumOf { it.toObject(Expense::class.java).amount }
+            emit(total)
+        } catch (e: Exception) {
+            Log.e("ExpenseDebug", "Error getting monthly expenses: ${e.message}", e)
+            emit(0.0)
+        }
     }
 
-    override suspend fun getMonthlyCategoryTotals(): Map<ExpenseCategory, Double> {
+    override fun getMonthlyCategoryTotals(): Flow<Map<ExpenseCategory, Double>> = flow {
         val start = getStartOfMonth()
-        val expenses = firestore.collection("Expenses")
-            .document(auth.currentUser?.uid ?: "")
-            .collection("Expenses")
-            .whereGreaterThanOrEqualTo("date", start)
-            .get().await()
-            .map { it.toObject(Expense::class.java) }
+        try {
+            val expenses = firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .whereGreaterThanOrEqualTo("date", start)
+                .get()
+                .await()
+                .map { it.toObject(Expense::class.java) }
 
-        return expenses.groupBy { it.category }
-            .mapValues { entry -> entry.value.sumOf { it.amount } }
+            val categoryTotals = expenses.groupBy { it.category }
+                .mapValues { entry -> entry.value.sumOf { it.amount } }
+
+            emit(categoryTotals)
+        } catch (e: Exception) {
+            Log.e("ExpenseDebug", "Error getting category totals: ${e.message}", e)
+            emit(emptyMap())
+        }
     }
+
 
     override fun getLast5Expenses(): Flow<List<Expense>> = callbackFlow {
         val uid = auth.currentUser?.uid ?: run {
@@ -171,6 +194,22 @@ class ExpenseRepositoryImpl @Inject constructor(
             listenerRegistration.remove()
             Log.d("ExpenseRepository", "Listener removed")
         }
+    }
+
+    override suspend fun deleteExpense(expense: Expense): Result<Unit> {
+
+        return try {
+            firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .document(expense.expenseId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
     }
 
 }
