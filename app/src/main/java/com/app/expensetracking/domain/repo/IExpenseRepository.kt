@@ -19,6 +19,8 @@ interface IExpenseRepository {
 
     fun getMonthlyCategoryTotals(): Flow<Map<ExpenseCategory, Double>>
 
+    fun getMonthlyDailyExpenses(): Flow<Map<String, Double>>
+
     fun getLast5Expenses(): Flow<List<Expense>>
 
     suspend fun deleteExpense(expense: Expense): Result<Unit>

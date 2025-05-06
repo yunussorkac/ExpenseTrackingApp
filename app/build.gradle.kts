@@ -77,6 +77,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation (libs.accompanist.systemuicontroller)
+    implementation("androidx.compose.material:material-icons-extended:$2024.05.00")
+    implementation (libs.compose.charts)
 
 
 }

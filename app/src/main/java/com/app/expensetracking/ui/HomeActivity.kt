@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.app.expensetracking.presentation.chart.ChartScreen
 import com.app.expensetracking.presentation.add.AddExpenseScreen
 import com.app.expensetracking.presentation.home.HomeScreen
 import com.app.expensetracking.presentation.list.ListScreen
@@ -52,6 +53,7 @@ fun HomeContent() {
     val items = remember {
         listOf(
             NavigationItem.Home,
+            NavigationItem.Chart,
             NavigationItem.List,
             NavigationItem.Settings
         )
@@ -59,6 +61,7 @@ fun HomeContent() {
 
     val topBarTitle = when (currentRoute) {
         NavigationItem.Home.route -> NavigationItem.Home.title
+        NavigationItem.Chart.route -> NavigationItem.Chart.title
         NavigationItem.List.route -> NavigationItem.List.title
         NavigationItem.Settings.route -> NavigationItem.Settings.title
         Screens.Add::class.qualifiedName -> "Add Expense"
@@ -136,6 +139,9 @@ fun HomeNavigation(navController: NavHostController) {
         composable(NavigationItem.Home.route) {
             HomeScreen(navController)
         }
+        composable(NavigationItem.Chart.route) {
+            ChartScreen()
+        }
         composable(NavigationItem.List.route) {
             ListScreen(navController)
         }
@@ -146,8 +152,6 @@ fun HomeNavigation(navController: NavHostController) {
         composable<Screens.Add> {
             AddExpenseScreen(navController)
         }
-
-
 
 
 

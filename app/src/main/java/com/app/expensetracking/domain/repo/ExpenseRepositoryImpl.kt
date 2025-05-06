@@ -15,7 +15,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 class ExpenseRepositoryImpl @Inject constructor(
@@ -211,5 +214,44 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
 
     }
+
+    override fun getMonthlyDailyExpenses(): Flow<Map<String, Double>> = flow {
+        val start = getStartOfMonth()
+        val calendar = Calendar.getInstance()
+        val currentMonth = calendar.get(Calendar.MONTH)
+        val currentYear = calendar.get(Calendar.YEAR)
+        val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
+
+        try {
+            val expenses = firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .whereGreaterThanOrEqualTo("date", start)
+                .get()
+                .await()
+                .map { it.toObject(Expense::class.java) }
+
+            val monthlyExpenses = expenses.filter { expense ->
+                val expenseDate = Date(expense.date)
+                calendar.time = expenseDate
+                calendar.get(Calendar.MONTH) == currentMonth && calendar.get(Calendar.YEAR) == currentYear
+            }
+
+            val dailyExpenses = monthlyExpenses.groupBy { expense ->
+                val date = Date(expense.date)
+                formatter.format(date)
+            }.mapValues { (_, expenses) ->
+                expenses.sumOf { it.amount }
+            }
+
+            Log.d("ChartDebug", "Daily expenses: $dailyExpenses")
+            emit(dailyExpenses)
+        } catch (e: Exception) {
+            Log.e("ExpenseDebug", "Error getting monthly daily expenses: ${e.message}", e)
+            emit(emptyMap())
+        }
+    }
+
+
 
 }
