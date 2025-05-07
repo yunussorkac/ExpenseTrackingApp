@@ -89,7 +89,9 @@ fun SettingsScreen(navHostController: NavHostController) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedButton(
-                        onClick = { /* Open profile edit screen */ },
+                        onClick = {
+
+                        },
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text("Edit Profile")

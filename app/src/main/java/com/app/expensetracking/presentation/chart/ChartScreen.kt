@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.expensetracking.ui.viewmodel.ChartViewModel
 import ir.ehsannarmani.compose_charts.PieChart
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -40,11 +39,11 @@ import java.util.Locale
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import ir.ehsannarmani.compose_charts.ColumnChart
@@ -53,9 +52,9 @@ import ir.ehsannarmani.compose_charts.models.Bars
 import ir.ehsannarmani.compose_charts.models.Pie
 
 @Composable
-fun ChartScreen(
-    viewModel: ChartViewModel = hiltViewModel()
-) {
+fun ChartScreen() {
+
+    val viewModel = hiltViewModel<ChartScreenViewModel>()
     val categoryTotals by viewModel.categoryTotals.collectAsState()
     val dailyExpenses by viewModel.dailyExpenses.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -76,6 +75,9 @@ fun ChartScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadChartData()
+    }
 
 
     Box(

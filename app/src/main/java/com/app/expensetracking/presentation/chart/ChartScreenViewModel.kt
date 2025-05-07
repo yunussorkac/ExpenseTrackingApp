@@ -1,4 +1,4 @@
-package com.app.expensetracking.ui.viewmodel
+package com.app.expensetracking.presentation.chart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ChartViewModel @Inject constructor(
+class ChartScreenViewModel @Inject constructor(
     private val getMonthlyCategoryTotalsUseCase: GetMonthlyCategoryTotalsUseCase,
     private val getMonthlyDailyExpensesUseCase: GetMonthlyDailyExpensesUseCase
 ) : ViewModel() {
@@ -30,9 +30,6 @@ class ChartViewModel @Inject constructor(
 
 
 
-    init {
-        loadChartData()
-    }
 
     fun loadChartData() {
         _isLoading.value = true
