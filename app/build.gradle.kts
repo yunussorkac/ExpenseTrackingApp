@@ -80,5 +80,13 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:$2024.05.00")
     implementation (libs.compose.charts)
 
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation (libs.retrofit)
+    implementation (libs.converter.scalars)
+    implementation (libs.converter.gson)
+
+
+
 
 }

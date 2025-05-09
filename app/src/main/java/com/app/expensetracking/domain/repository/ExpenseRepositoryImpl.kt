@@ -1,8 +1,9 @@
-package com.app.expensetracking.domain.repo
+package com.app.expensetracking.domain.repository
 
 import android.util.Log
-import com.app.expensetracking.model.Expense
-import com.app.expensetracking.model.ExpenseCategory
+import com.app.expensetracking.data.remote.repository.IExpenseRepository
+import com.app.expensetracking.domain.model.Expense
+import com.app.expensetracking.domain.model.ExpenseCategory
 import com.app.expensetracking.util.HelperFunctions.Companion.getEndOfDay
 import com.app.expensetracking.util.HelperFunctions.Companion.getStartOfDay
 import com.app.expensetracking.util.HelperFunctions.Companion.getStartOfMonth
@@ -134,13 +135,38 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getMonthlyCategoryTotals(): Flow<Map<ExpenseCategory, Double>> = flow {
-        val start = getStartOfMonth()
+    override fun getMonthlyCategoryTotals(month: Int?, year: Int?): Flow<Map<ExpenseCategory, Double>> = flow {
+        val calendar = Calendar.getInstance()
+
+        val targetMonth = month ?: calendar.get(Calendar.MONTH)
+        val targetYear = year ?: calendar.get(Calendar.YEAR)
+
+        val start = calendar.apply {
+            set(Calendar.YEAR, targetYear)
+            set(Calendar.MONTH, targetMonth)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val end = calendar.apply {
+            set(Calendar.YEAR, targetYear)
+            set(Calendar.MONTH, targetMonth)
+            set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
+
         try {
             val expenses = firestore.collection("Expenses")
                 .document(auth.currentUser?.uid ?: "")
                 .collection("Expenses")
                 .whereGreaterThanOrEqualTo("date", start)
+                .whereLessThanOrEqualTo("date", end)
                 .get()
                 .await()
                 .map { it.toObject(Expense::class.java) }
@@ -148,13 +174,13 @@ class ExpenseRepositoryImpl @Inject constructor(
             val categoryTotals = expenses.groupBy { it.category }
                 .mapValues { entry -> entry.value.sumOf { it.amount } }
 
+            Log.d("ChartDebug", "Category totals for ${targetMonth + 1}/$targetYear: $categoryTotals")
             emit(categoryTotals)
         } catch (e: Exception) {
             Log.e("ExpenseDebug", "Error getting category totals: ${e.message}", e)
             emit(emptyMap())
         }
     }
-
 
     override fun getLast5Expenses(): Flow<List<Expense>> = callbackFlow {
         val uid = auth.currentUser?.uid ?: run {
@@ -215,11 +241,32 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     }
 
-    override fun getMonthlyDailyExpenses(): Flow<Map<String, Double>> = flow {
-        val start = getStartOfMonth()
+    override fun getMonthlyDailyExpenses(month: Int?, year: Int? ): Flow<Map<String, Double>> = flow {
         val calendar = Calendar.getInstance()
-        val currentMonth = calendar.get(Calendar.MONTH)
-        val currentYear = calendar.get(Calendar.YEAR)
+
+        val targetMonth = month ?: calendar.get(Calendar.MONTH)
+        val targetYear = year ?: calendar.get(Calendar.YEAR)
+
+        val start = calendar.apply {
+            set(Calendar.YEAR, targetYear)
+            set(Calendar.MONTH, targetMonth)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val end = calendar.apply {
+            set(Calendar.YEAR, targetYear)
+            set(Calendar.MONTH, targetMonth)
+            set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
+
         val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
 
         try {
@@ -227,24 +274,19 @@ class ExpenseRepositoryImpl @Inject constructor(
                 .document(auth.currentUser?.uid ?: "")
                 .collection("Expenses")
                 .whereGreaterThanOrEqualTo("date", start)
+                .whereLessThanOrEqualTo("date", end)
                 .get()
                 .await()
                 .map { it.toObject(Expense::class.java) }
 
-            val monthlyExpenses = expenses.filter { expense ->
-                val expenseDate = Date(expense.date)
-                calendar.time = expenseDate
-                calendar.get(Calendar.MONTH) == currentMonth && calendar.get(Calendar.YEAR) == currentYear
-            }
-
-            val dailyExpenses = monthlyExpenses.groupBy { expense ->
+            val dailyExpenses = expenses.groupBy { expense ->
                 val date = Date(expense.date)
                 formatter.format(date)
             }.mapValues { (_, expenses) ->
                 expenses.sumOf { it.amount }
             }
 
-            Log.d("ChartDebug", "Daily expenses: $dailyExpenses")
+            Log.d("ChartDebug", "Daily expenses for ${targetMonth + 1}/$targetYear: $dailyExpenses")
             emit(dailyExpenses)
         } catch (e: Exception) {
             Log.e("ExpenseDebug", "Error getting monthly daily expenses: ${e.message}", e)
@@ -252,6 +294,60 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getExpenseById(expenseId: String): Result<Expense> {
+        return try {
+            val document = firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .document(expenseId)
+                .get()
+                .await()
 
+            val expense = document.toObject(Expense::class.java)
+            if (expense != null) {
+                Result.success(expense)
+            } else {
+                Result.failure(Exception("Expense not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun editExpense(expense: Expense): Result<Unit> {
+        return try {
+            firestore.collection("Expenses")
+                .document(auth.currentUser?.uid ?: "")
+                .collection("Expenses")
+                .document(expense.expenseId)
+                .set(expense)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override fun searchExpenses(query: String): Flow<List<Expense>> = callbackFlow {
+        val queryRef = firestore
+            .collection("Expenses")
+            .document(auth.currentUser?.uid ?: "")
+            .collection("Expenses")
+            .orderBy("title")
+            .startAt(query)
+            .endAt(query + '\uf8ff')
+
+        val listener = queryRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+
+            val expenses = snapshot?.toObjects(Expense::class.java) ?: emptyList()
+            trySend(expenses).isSuccess
+        }
+
+        awaitClose { listener.remove() }
+    }
 
 }

@@ -1,6 +1,6 @@
-package com.app.expensetracking.domain.repo
+package com.app.expensetracking.data.remote.repository
 
-import com.app.expensetracking.model.User
+import com.app.expensetracking.domain.model.User
 
 interface IAuthRepository {
 

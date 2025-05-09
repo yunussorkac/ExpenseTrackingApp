@@ -1,4 +1,4 @@
-package com.app.expensetracking.model
+package com.app.expensetracking.domain.model
 
 data class User(
     val userId: String = "",

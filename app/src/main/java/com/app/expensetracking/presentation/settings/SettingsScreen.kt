@@ -36,11 +36,19 @@ fun SettingsScreen(navHostController: NavHostController) {
     val user by viewModel.user.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     var showThemeDialog by remember { mutableStateOf(false) }
-    var darkModeEnabled by remember { mutableStateOf(false) }
+
+    var darkMode = viewModel.isDarkMode.collectAsStateWithLifecycle()
+
+    val selectedCurrency by viewModel.selectedCurrency.collectAsStateWithLifecycle()
+    var showCurrencyDialog by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
+        viewModel.isDarkMode()
         viewModel.getUser()
+        viewModel.loadCurrency()
     }
+
 
     Column(
         modifier = Modifier
@@ -86,16 +94,7 @@ fun SettingsScreen(navHostController: NavHostController) {
                         fontWeight = FontWeight.Medium
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
 
-                    OutlinedButton(
-                        onClick = {
-
-                        },
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text("Edit Profile")
-                    }
                 }
             }
         }
@@ -103,14 +102,14 @@ fun SettingsScreen(navHostController: NavHostController) {
         SettingsSection(title = "General Settings") {
             SettingsItem(
                 title = "Theme",
-                description = if (darkModeEnabled) "Dark Theme" else "Light Theme",
+                description = if (darkMode.value) "Dark Theme" else "Light Theme",
                 icon = Icons.Outlined.DarkMode,
                 onClick = { showThemeDialog = true }
             ) {
                 Switch(
-                    checked = darkModeEnabled,
+                    checked = darkMode.value,
                     onCheckedChange = {
-                        darkModeEnabled = it
+                        viewModel.setDarkMode(it)
                     }
                 )
             }
@@ -118,9 +117,11 @@ fun SettingsScreen(navHostController: NavHostController) {
 
             SettingsItem(
                 title = "Currency",
-                description = "TRY",
+                description = selectedCurrency,
                 icon = Icons.Outlined.CurrencyExchange,
-                onClick = {  }
+                onClick = {
+                    showCurrencyDialog = true
+                }
             )
         }
 
@@ -185,4 +186,45 @@ fun SettingsScreen(navHostController: NavHostController) {
             }
         }
     }
+
+    if (showCurrencyDialog) {
+        val currencies = listOf("TRY", "USD", "EUR")
+        AlertDialog(
+            onDismissRequest = { showCurrencyDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showCurrencyDialog = false }) {
+                    Text("Close")
+                }
+            },
+            title = { Text("Select Currency") },
+            text = {
+                Column {
+                    currencies.forEach { currency ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setCurrency(currency)
+                                    showCurrencyDialog = false
+                                }
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedCurrency == currency,
+                                onClick = {
+                                    viewModel.setCurrency(currency)
+                                    showCurrencyDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = currency)
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+
 }

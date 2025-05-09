@@ -11,12 +11,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.app.expensetracking.presentation.login.LoginScreen
 import com.app.expensetracking.presentation.register.RegisterScreen
+import com.app.expensetracking.presentation.settings.SettingsScreenViewModel
 import com.app.expensetracking.ui.theme.ExpenseTrackingAppTheme
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,7 +36,11 @@ class MainActivity : ComponentActivity() {
             return
         }
         setContent {
-            ExpenseTrackingAppTheme {
+            val viewModel = hiltViewModel<SettingsScreenViewModel>()
+            val isDarkMode = viewModel.isDarkMode.collectAsStateWithLifecycle()
+            ExpenseTrackingAppTheme(
+                darkTheme = isDarkMode.value
+            ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) {
                     MainContent(modifier = Modifier.padding(it))
                 }

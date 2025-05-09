@@ -3,7 +3,7 @@ package com.app.expensetracking.presentation.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.expensetracking.domain.usecase.expense.AddExpenseUseCase
-import com.app.expensetracking.model.Expense
+import com.app.expensetracking.domain.model.Expense
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

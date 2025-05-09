@@ -1,6 +1,7 @@
-package com.app.expensetracking.domain.repo
+package com.app.expensetracking.domain.repository
 
-import com.app.expensetracking.model.User
+import com.app.expensetracking.data.remote.repository.IAuthRepository
+import com.app.expensetracking.domain.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

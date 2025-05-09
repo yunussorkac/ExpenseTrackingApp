@@ -1,7 +1,7 @@
 package com.app.expensetracking.domain.usecase.auth
 
-import com.app.expensetracking.domain.repo.IAuthRepository
-import com.app.expensetracking.model.User
+import com.app.expensetracking.data.remote.repository.IAuthRepository
+import com.app.expensetracking.domain.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject

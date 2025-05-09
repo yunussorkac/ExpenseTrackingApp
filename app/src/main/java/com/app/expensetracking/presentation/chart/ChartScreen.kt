@@ -40,12 +40,15 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
+import com.app.expensetracking.presentation.settings.SettingsScreenViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
 import ir.ehsannarmani.compose_charts.models.Bars
@@ -53,14 +56,22 @@ import ir.ehsannarmani.compose_charts.models.Pie
 
 @Composable
 fun ChartScreen() {
-
     val viewModel = hiltViewModel<ChartScreenViewModel>()
-    val categoryTotals by viewModel.categoryTotals.collectAsState()
-    val dailyExpenses by viewModel.dailyExpenses.collectAsState()
+    val categoryTotals by viewModel.convertedCategoryTotals.collectAsState()
+    val dailyExpenses by viewModel.convertedDailyExpenses.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val selectedMonth by viewModel.selectedMonth.collectAsState()
+    val selectedYear by viewModel.selectedYear.collectAsState()
 
-    val scrollState = rememberScrollState()
-    val currentMonth = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Calendar.getInstance().time)
+    val settingsViewModel = hiltViewModel<SettingsScreenViewModel>()
+    val currency by settingsViewModel.selectedCurrency.collectAsState()
+
+    val displayMonth = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(
+        Calendar.getInstance().apply {
+            set(Calendar.YEAR, selectedYear)
+            set(Calendar.MONTH, selectedMonth)
+        }.time
+    )
 
     val colors = remember {
         listOf(
@@ -76,14 +87,19 @@ fun ChartScreen() {
     }
 
     LaunchedEffect(Unit) {
-        viewModel.loadChartData()
+        settingsViewModel.loadCurrency()
     }
 
+    LaunchedEffect(currency, selectedMonth, selectedYear) {
+        if (currency.isNotBlank()) {
+            viewModel.loadConvertedData(currency)
+        }
+    }
 
     Box(
         modifier = Modifier
+            .padding(horizontal = 10.dp)
             .fillMaxSize()
-            .padding(10.dp)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -95,49 +111,60 @@ fun ChartScreen() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(rememberScrollState())
             ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { viewModel.previousMonth(currency) }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Previous Month"
+                            )
+                        }
+
+                        Text(
+                            text = displayMonth,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
+
+                        IconButton(onClick = { viewModel.nextMonth(currency) }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowForward,
+                                contentDescription = "Next Month"
+                            )
+                        }
 
 
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-
                     Column(
                         modifier = Modifier.padding(12.dp)
                     ) {
-
-                        Row (
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Text(
-                                text = "Monthly Expenses by Category",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            IconButton(onClick = { viewModel.loadChartData() }) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Refresh"
-                                )
-                            }
-                        }
-
-
-
-
                         Text(
-                            text = currentMonth,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "Monthly Expenses by Category",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
-
-
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -149,7 +176,7 @@ fun ChartScreen() {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "No expenses recorded this month",
+                                    text = "No expenses recorded for $displayMonth",
                                     style = MaterialTheme.typography.bodyLarge,
                                     textAlign = TextAlign.Center
                                 )
@@ -221,7 +248,7 @@ fun ChartScreen() {
                                         )
 
                                         Text(
-                                            text = "₺${String.format("%.2f", entry.value)}",
+                                            text = "$currency${String.format("%.2f", entry.value)}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -237,21 +264,15 @@ fun ChartScreen() {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
                             text = "Daily Expenses",
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = currentMonth,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -264,7 +285,7 @@ fun ChartScreen() {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "No daily expenses recorded this month",
+                                    text = "No daily expenses recorded for $displayMonth",
                                     style = MaterialTheme.typography.bodyLarge,
                                     textAlign = TextAlign.Center
                                 )
@@ -296,20 +317,13 @@ fun ChartScreen() {
                                 ),
                                 onBarClick = {
                                     println("Bar clicked")
-                                },
-
-                                )
+                                }
+                            )
                         }
                     }
-
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-
             }
-
         }
     }
-
-
-
 }
