@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,11 +69,6 @@ fun ListScreen(navHostController: NavHostController) {
         }
 
         if (selectedCategories.isNotEmpty()) {
-            Text(
-                "Filtered by categories:",
-                modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
 
             Row(
                 modifier = Modifier
@@ -88,14 +84,14 @@ fun ListScreen(navHostController: NavHostController) {
                         modifier = Modifier.padding(end = 4.dp),
                         leadingIcon = {
                             Icon(
-                                painter = androidx.compose.ui.res.painterResource(id = category.icon),
+                                painter = painterResource(id = category.icon),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
                         },
                         trailingIcon = {
                             Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                                imageVector = Icons.Default.Close,
                                 contentDescription = "Remove filter"
                             )
                         }

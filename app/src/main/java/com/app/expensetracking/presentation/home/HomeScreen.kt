@@ -41,6 +41,7 @@ import com.app.expensetracking.presentation.currency.CurrencyViewModel
 import com.app.expensetracking.presentation.settings.SettingsScreenViewModel
 import com.app.expensetracking.ui.Screens
 import com.app.expensetracking.ui.components.expense.ExpenseCard
+import com.app.expensetracking.ui.components.home.CategoryGrid
 import com.app.expensetracking.ui.components.home.CategoryItem
 import com.app.expensetracking.ui.components.home.SummaryCard
 
@@ -129,31 +130,19 @@ fun HomeScreen(navHostController: NavHostController) {
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        "Monthly by Categories",
-                        fontWeight = FontWeight.Bold,
+                        text = "Monthly by Categories",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
+
                     if (categoryTotalsConverted.isEmpty()) {
                         Text(
                             "No Data",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        categoryTotalsConverted.toList().forEachIndexed { index, (category, amount) ->
-                            CategoryItem(
-                                categoryName = category.displayName,
-                                amount = amount,
-                                currency = currency
-                            )
-
-                            if (index != categoryTotalsConverted.size - 1) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = MaterialTheme.colorScheme.outline,
-                                )
-                            }
-                        }
+                        CategoryGrid(categories = categoryTotalsConverted, currency = currency)
                     }
                 }
             }
