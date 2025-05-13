@@ -10,7 +10,7 @@ Expense Tracker App
 
 - 🔐 User authentication (Login/Register) via Firebase Authentication  
 - 📊 Visualize spending data with interactive charts using Compose Charts  
-- 💱 Dynamic currency support with real-time exchange rates via Currency API (https://github.com/fawazahmed0/exchange-api/)  
+- 💱 Dynamic currency support with real-time exchange rates via Currency API 
 - 🔄 Automatic conversion of all previously added expenses when currency is changed  
 - ☁️ Real-time data storage and syncing with Firebase Firestore  
 - ⚙️ User preferences stored using DataStore  
