@@ -7,6 +7,7 @@ import com.app.expensetracking.domain.usecase.expense.DeleteExpenseUseCase
 import com.app.expensetracking.domain.usecase.expense.GetExpensesUseCase
 import com.app.expensetracking.domain.model.Expense
 import com.app.expensetracking.domain.model.ExpenseCategory
+import com.app.expensetracking.domain.usecase.expense.GetRecentExpensesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
+    private val getRecentExpensesUseCase: GetRecentExpensesUseCase,
     private val getExpensesUseCase: GetExpensesUseCase,
     private val deleteExpenseUseCase: DeleteExpenseUseCase,
     private val currencyUseCase : CurrencyUseCase
@@ -41,8 +43,8 @@ class HomeScreenViewModel @Inject constructor(
 
     fun getRecentExpenses() {
         viewModelScope.launch {
-            getExpensesUseCase().collect { expenses ->
-                _recentExpenses.value = expenses.takeLast(5)
+            getRecentExpensesUseCase().collect { expenses ->
+                _recentExpenses.value = expenses
             }
         }
     }

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Card
@@ -58,6 +60,7 @@ fun HomeScreen(navHostController: NavHostController) {
     val weeklyConverted by viewModel.weeklyTotalConverted.collectAsStateWithLifecycle()
     val monthlyConverted by viewModel.monthlyTotalConverted.collectAsStateWithLifecycle()
     val categoryTotalsConverted by viewModel.categoryTotalsConverted.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { recentExpenses.size })
 
     LaunchedEffect(Unit) {
         viewModel.getRecentExpenses()
@@ -137,16 +140,19 @@ fun HomeScreen(navHostController: NavHostController) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        categoryTotalsConverted.forEach { (category, amount) ->
+                        categoryTotalsConverted.toList().forEachIndexed { index, (category, amount) ->
                             CategoryItem(
                                 categoryName = category.displayName,
                                 amount = amount,
                                 currency = currency
                             )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                color = MaterialTheme.colorScheme.outline
-                            )
+
+                            if (index != categoryTotalsConverted.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
+                            }
                         }
                     }
                 }
@@ -155,9 +161,8 @@ fun HomeScreen(navHostController: NavHostController) {
 
         item {
             Text(
-                text = "Recent Expenses",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                text = "Recent Expenses (${recentExpenses.size})",
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -172,28 +177,32 @@ fun HomeScreen(navHostController: NavHostController) {
                     )
                 ) {
                     Text(
-                        "No Data.",
+                        "No Expense",
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         } else {
-            items(recentExpenses) { expense ->
-                ExpenseCard(
-                    expense = expense,
-                    currency = currency,
-                    isHome = true,
-                    onDelete = {
-                        viewModel.deleteExpense(expense) {}
-                    },
-                    onEdit = {
-                        navHostController.navigate(Screens.Edit(expense.expenseId))
-                    }
-
-
-                )
+            item{
+                HorizontalPager(state = pagerState) { page ->
+                    val expense = recentExpenses[page]
+                    ExpenseCard(
+                        expense = expense,
+                        currency = currency,
+                        isHome = true,
+                        onDelete = {
+                            viewModel.deleteExpense(expense) {}
+                        },
+                        onEdit = {
+                            navHostController.navigate(Screens.Edit(expense.expenseId))
+                        }
+                    )
+                }
             }
+
+
+
         }
     }
 }
